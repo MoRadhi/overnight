@@ -1,0 +1,63 @@
+version: "3.9"
+
+# Local development only - spins up a local Postgres instead of Supabase.
+# Run from the parent directory containing all three repos as siblings:
+#
+#   overnight/
+#     docker-compose.yml   <- this file
+#     overnight-backend/
+#     overnight-analytics/
+#     overnight-frontend/
+#
+# Usage: docker compose up --build
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: overnight
+      POSTGRES_USER: overnight
+      POSTGRES_PASSWORD: overnight
+    ports:
+      - "5432:5432"
+    volumes:
+      - overnight_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U overnight"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  analytics:
+    build: ./overnight-analytics
+    ports:
+      - "8000:8000"
+
+  backend:
+    build: ./overnight-backend
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/overnight
+      DB_USERNAME: overnight
+      DB_PASSWORD: overnight
+      ANALYTICS_SERVICE_URL: http://analytics:8000
+      JWT_SECRET: local-dev-secret-do-not-use-in-production-min-32-chars
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      analytics:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ./overnight-frontend
+    environment:
+      VITE_API_BASE_URL: http://localhost:8080
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  overnight_db_data:

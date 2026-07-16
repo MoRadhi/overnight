@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: overnight-backend
+    runtime: docker
+    healthCheckPath: /actuator/health
+    autoDeploy: true
+    envVars:
+      - key: DB_URL
+        sync: false          # Supabase JDBC URL
+      - key: DB_USERNAME
+        sync: false          # Supabase DB username
+      - key: DB_PASSWORD
+        sync: false          # Supabase DB password
+      - key: JWT_SECRET
+        sync: false          # Min 32-char random string - generate with: openssl rand -hex 32
+      - key: ANALYTICS_SERVICE_URL
+        sync: false          # https://overnight-analytics.onrender.com (set after analytics deploys)
+      - key: JWT_EXPIRATION_MINUTES
+        value: "120"
