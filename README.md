@@ -189,6 +189,3 @@ the datasource configuration that disables server-side prepared statements.
 ## Documentation
 
 - `ARCHITECTURE.md` for service boundaries, runtime flow, and repo structure
-- `Deployment.md` for deployment notes and environment setup
-- `Overnight_HANDOFF.md` for current implementation status and handoff notes
-- `Overnight_PRD.md` for internal planning and product requirements
