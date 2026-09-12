@@ -134,6 +134,18 @@ npm run dev
 - Search room availability by check-in and check-out dates
 - Create reservations and submit post-stay reviews
 
+![Home page hero](docs/screenshots/01-home-hero.png)
+_Home — hero and navigation._
+
+![Curated properties grid](docs/screenshots/03-home-properties.png)
+_Home — curated properties grid._
+
+![Hotel detail page](docs/screenshots/04-hotel-detail.png)
+_Hotel detail — description, room selection, and booking sidebar._
+
+![Booking form](docs/screenshots/05-booking-form.png)
+_Booking flow for a selected room type._
+
 ### Admin experience
 
 - Manage hotels, room types, and rooms
@@ -141,11 +153,26 @@ npm run dev
 - Review guest records and reservation history
 - Access analytics across all hotels or a selected property
 
+![Admin login](docs/screenshots/06-admin-login.png)
+_Admin sign-in._
+
+![Admin hotel management](docs/screenshots/07-admin-hotels.png)
+_Admin — hotel CRUD._
+
+![Admin room and room type management](docs/screenshots/08-admin-rooms.png)
+_Admin — room type and room inventory management._
+
+![Admin reservations list](docs/screenshots/09-admin-reservations.png)
+_Admin — reservation lifecycle management across all properties._
+
 ### Analytics features
 
 - RFM guest segmentation
 - Review sentiment scoring and trend reporting
 - Occupancy summaries and short-term forecasting
+
+![Admin analytics dashboard](docs/screenshots/10-admin-analytics.png)
+_Admin analytics — revenue, guest segments, and sentiment, group-wide._
 
 ## Deployment and CI/CD
 
