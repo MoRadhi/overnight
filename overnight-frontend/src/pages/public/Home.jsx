@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import Hero from "./components/Hero";
 import { fetchHotels, fetchCountries } from "../../api/hotels";
+import { useKeyedCache } from "../../hooks/useKeyedCache";
 import { useTextReveal, useStaggerReveal } from "../../hooks/useReveal";
 import StatsBar from "./components/StatsBar";
 import Pillars from "./components/Pillars";
@@ -73,6 +74,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   const propertiesRef = useRef(null);
+  const cache = useKeyedCache();
 
   const selectedCountry = searchParams.get("country") || null;
 
@@ -83,18 +85,36 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    const cached = cache.get("all");
+    if (cached) {
+      setAllHotels(cached);
+      return;
+    }
     fetchHotels()
-      .then(setAllHotels)
+      .then((data) => {
+        cache.set("all", data);
+        setAllHotels(data);
+      })
       .catch(() => setAllHotels([]));
-  }, []);
+  }, [cache]);
 
   useEffect(() => {
+    const key = selectedCountry || "all";
+    const cached = cache.get(key);
+    if (cached) {
+      setHotels(cached);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     fetchHotels(selectedCountry)
-      .then(setHotels)
+      .then((data) => {
+        cache.set(key, data);
+        setHotels(data);
+      })
       .catch(() => setHotels([]))
       .finally(() => setLoading(false));
-  }, [selectedCountry]);
+  }, [selectedCountry, cache]);
 
   const selectCountry = useCallback(
     (c) => {

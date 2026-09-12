@@ -24,7 +24,7 @@ import {
 import ConfirmModal from "../../components/ConfirmModal";
 import { useKeyedCache } from "../../hooks/useKeyedCache";
 
-const EMPTY_RT = { name: "", description: "", basePrice: "", capacity: 2 };
+const EMPTY_RT = { name: "", description: "", basePrice: "", capacity: 2, imageUrl: "" };
 const EMPTY_RM = { roomNumber: "", floor: 0, status: "AVAILABLE" };
 
 export default function Rooms() {
@@ -125,6 +125,7 @@ export default function Rooms() {
       description: rt.description ?? "",
       basePrice: rt.basePrice,
       capacity: rt.capacity,
+      imageUrl: rt.imageUrl ?? "",
     });
     setRtError(null);
     setShowRtModal(true);
@@ -623,6 +624,17 @@ export default function Rooms() {
                 </Form.Group>
               </Col>
             </Row>
+            <Form.Group className="mb-3">
+              <Form.Label
+                style={{ color: "var(--on-text-muted)", fontSize: "0.85rem" }}
+              >
+                Image URL
+              </Form.Label>
+              <Form.Control
+                placeholder="https://images.unsplash.com/photo-..."
+                {...rtField("imageUrl")}
+              />
+            </Form.Group>
           </Modal.Body>
           <Modal.Footer style={{ ...surface, borderTop: "none" }}>
             <Button

@@ -74,5 +74,6 @@ public class RoomTypeService {
         rt.setDescription(req.description());
         rt.setBasePrice(req.basePrice());
         rt.setCapacity(req.capacity());
+        rt.setImageUrl(req.imageUrl());
     }
 }

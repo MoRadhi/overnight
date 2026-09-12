@@ -157,7 +157,7 @@ Each service still deploys as its own Render/Vercel project, each pointed
 at this monorepo with its own subfolder set as that project's "Root
 Directory":
 
-- Frontend: Vercel or Netlify (`overnight-frontend`)
+- Frontend: Vercel (`overnight-frontend`)
 - Backend: Render (`overnight-backend`)
 - Analytics: Render (`overnight-analytics`)
 - Database: Supabase PostgreSQL

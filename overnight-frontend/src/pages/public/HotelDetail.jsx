@@ -16,6 +16,11 @@ const FLAGS = {
   India: "🇮🇳",
 };
 
+// Module-level (not component state) so it survives this component unmounting
+// on route change - revisiting a property (browse -> back -> same hotel) reuses
+// the cached data instead of re-fetching. Resets on a full page reload.
+const detailCache = new Map();
+
 export default function HotelDetail() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
@@ -56,11 +61,21 @@ export default function HotelDetail() {
   }, [id]);
 
   useEffect(() => {
+    const cached = detailCache.get(id);
+    if (cached) {
+      setHotel(cached.hotel);
+      setRoomTypes(cached.roomTypes);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     Promise.all([fetchHotel(id), fetchRoomTypes(id)])
       .then(([h, rt]) => {
+        detailCache.set(id, { hotel: h, roomTypes: rt });
         setHotel(h);
         setRoomTypes(rt);
       })
