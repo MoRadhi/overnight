@@ -10,10 +10,11 @@ import java.util.List;
 
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
-    List<Reservation> findByHotelId(Long hotelId);
-    List<Reservation> findByGuestId(Long guestId);
-    List<Reservation> findByStatus(ReservationStatus status);
-    List<Reservation> findByHotelIdAndStatus(Long hotelId, ReservationStatus status);
+    List<Reservation> findByHotelIdOrderByIdAsc(Long hotelId);
+    List<Reservation> findByGuestIdOrderByIdAsc(Long guestId);
+    List<Reservation> findByStatusOrderByIdAsc(ReservationStatus status);
+    List<Reservation> findByHotelIdAndStatusOrderByIdAsc(Long hotelId, ReservationStatus status);
+    List<Reservation> findAllByOrderByIdAsc();
 
     @Query("""
         SELECT r FROM Reservation r

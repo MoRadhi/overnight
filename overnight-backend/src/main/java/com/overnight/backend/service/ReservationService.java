@@ -37,8 +37,8 @@ public class ReservationService {
 
     public List<ReservationResponse> findAll(Optional<Long> hotelId) {
         List<Reservation> results = hotelId
-                .map(reservationRepository::findByHotelId)
-                .orElseGet(reservationRepository::findAll);
+                .map(reservationRepository::findByHotelIdOrderByIdAsc)
+                .orElseGet(reservationRepository::findAllByOrderByIdAsc);
         return results.stream().map(ReservationResponse::from).toList();
     }
 
@@ -49,7 +49,7 @@ public class ReservationService {
     }
 
     public List<ReservationResponse> findByGuest(Long guestId) {
-        return reservationRepository.findByGuestId(guestId)
+        return reservationRepository.findByGuestIdOrderByIdAsc(guestId)
                 .stream()
                 .map(ReservationResponse::from)
                 .toList();

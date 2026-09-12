@@ -20,7 +20,7 @@ public class GuestService {
     }
 
     public List<GuestResponse> findAll() {
-        return guestRepository.findAll()
+        return guestRepository.findAllByOrderByIdAsc()
                 .stream()
                 .map(GuestResponse::from)
                 .toList();

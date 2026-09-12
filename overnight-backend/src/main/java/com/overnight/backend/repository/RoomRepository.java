@@ -8,9 +8,9 @@ import java.util.List;
 
 public interface RoomRepository extends JpaRepository<Room, Long> {
 
-    List<Room> findByRoomTypeId(Long roomTypeId);
+    List<Room> findByRoomTypeIdOrderByIdAsc(Long roomTypeId);
 
-    @Query("SELECT r FROM Room r JOIN r.roomType rt WHERE rt.hotel.id = :hotelId")
+    @Query("SELECT r FROM Room r JOIN r.roomType rt WHERE rt.hotel.id = :hotelId ORDER BY r.id")
     List<Room> findByHotelId(@Param("hotelId") Long hotelId);
 
     @Query("SELECT COUNT(r) FROM Room r JOIN r.roomType rt WHERE rt.hotel.id = :hotelId")

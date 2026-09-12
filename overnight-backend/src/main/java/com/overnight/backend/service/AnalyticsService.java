@@ -45,8 +45,8 @@ public class AnalyticsService {
 
     public List<GuestSegmentResponse> getSegments(Optional<Long> hotelId) {
         List<Reservation> completed = hotelId
-                .map(id -> reservationRepository.findByHotelIdAndStatus(id, ReservationStatus.CHECKED_OUT))
-                .orElseGet(() -> reservationRepository.findByStatus(ReservationStatus.CHECKED_OUT));
+                .map(id -> reservationRepository.findByHotelIdAndStatusOrderByIdAsc(id, ReservationStatus.CHECKED_OUT))
+                .orElseGet(() -> reservationRepository.findByStatusOrderByIdAsc(ReservationStatus.CHECKED_OUT));
 
         if (completed.isEmpty()) return List.of();
 
@@ -83,8 +83,8 @@ public class AnalyticsService {
 
     public AnalyticsSummaryResponse getSummary(Optional<Long> hotelId) {
         List<Reservation> completed = hotelId
-                .map(id -> reservationRepository.findByHotelIdAndStatus(id, ReservationStatus.CHECKED_OUT))
-                .orElseGet(() -> reservationRepository.findByStatus(ReservationStatus.CHECKED_OUT));
+                .map(id -> reservationRepository.findByHotelIdAndStatusOrderByIdAsc(id, ReservationStatus.CHECKED_OUT))
+                .orElseGet(() -> reservationRepository.findByStatusOrderByIdAsc(ReservationStatus.CHECKED_OUT));
 
         // Revenue by month (last 12 months only)
         LocalDate cutoff = LocalDate.now().minusMonths(12);
@@ -135,7 +135,7 @@ public class AnalyticsService {
         if (totalRooms == 0) return List.of();
 
         // Build occupancy history for the last OCCUPANCY_HISTORY_DAYS days
-        List<Reservation> relevant = reservationRepository.findByHotelId(hotelId)
+        List<Reservation> relevant = reservationRepository.findByHotelIdOrderByIdAsc(hotelId)
                 .stream()
                 .filter(r -> r.getStatus() == ReservationStatus.CHECKED_OUT
                           || r.getStatus() == ReservationStatus.CHECKED_IN)

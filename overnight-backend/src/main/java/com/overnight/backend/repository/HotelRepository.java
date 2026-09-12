@@ -13,4 +13,7 @@ public interface HotelRepository extends JpaRepository<Hotel, Long> {
     List<String> findDistinctCountries();
 
     List<Hotel> findByCountryOrderByNameAsc(String country);
+
+    /** Explicit order keeps admin list positions stable across edits (Postgres does not guarantee row order otherwise). */
+    List<Hotel> findAllByOrderByIdAsc();
 }

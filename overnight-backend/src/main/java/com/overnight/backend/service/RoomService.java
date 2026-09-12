@@ -30,7 +30,7 @@ public class RoomService {
         if (!roomTypeRepository.existsById(roomTypeId)) {
             throw new ResourceNotFoundException("RoomType", roomTypeId);
         }
-        return roomRepository.findByRoomTypeId(roomTypeId)
+        return roomRepository.findByRoomTypeIdOrderByIdAsc(roomTypeId)
                 .stream()
                 .map(RoomResponse::from)
                 .toList();

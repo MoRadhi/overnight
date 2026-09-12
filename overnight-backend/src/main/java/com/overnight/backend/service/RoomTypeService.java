@@ -29,7 +29,7 @@ public class RoomTypeService {
         if (!hotelRepository.existsById(hotelId)) {
             throw new ResourceNotFoundException("Hotel", hotelId);
         }
-        return roomTypeRepository.findByHotelId(hotelId)
+        return roomTypeRepository.findByHotelIdOrderByIdAsc(hotelId)
                 .stream()
                 .map(RoomTypeResponse::from)
                 .toList();

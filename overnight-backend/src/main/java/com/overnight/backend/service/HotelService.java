@@ -26,7 +26,7 @@ public class HotelService {
      */
     public List<HotelResponse> findAll(String country) {
         List<Hotel> hotels = (country == null || country.isBlank())
-                ? hotelRepository.findAll()
+                ? hotelRepository.findAllByOrderByIdAsc()
                 : hotelRepository.findByCountryOrderByNameAsc(country);
         return hotels.stream()
                 .map(HotelResponse::from)
