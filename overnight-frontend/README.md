@@ -6,9 +6,12 @@ operations dashboard.
 This app only talks to `overnight-backend`. It does not call
 `overnight-analytics` directly.
 
-Last updated: 2026-07-16.
+Last updated: 2026-09-12.
 
-## Purpose In The 3-Repo Architecture
+## Role In The Monorepo
+
+This is one of three applications in the `overnight` monorepo (see the
+root `README.md` and `ARCHITECTURE.md`). Within it, this app is:
 
 - User-facing and admin-facing UI layer.
 - Sends all data requests to backend REST APIs via Axios.
@@ -217,7 +220,9 @@ npm run lint
 
 ## Deployment
 
-- Primary deploy target: Vercel (`vercel.json` contains SPA rewrite rule).
+- Primary deploy target: Vercel (`vercel.json` contains SPA rewrite rule),
+  with the Vercel project's Root Directory set to `overnight-frontend`
+  (required since this is a monorepo).
 - `public/_redirects` is also present for SPA hosting compatibility.
 - Dockerfile is for local/dev containerized runs (not the main production path).
 

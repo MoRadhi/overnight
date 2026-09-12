@@ -9,9 +9,12 @@ server-to-server HTTP and powers:
 - Review sentiment scoring
 - Occupancy forecasting
 
-Last updated: 2026-07-16.
+Last updated: 2026-09-12.
 
-## Purpose In The 3-Repo Architecture
+## Role In The Monorepo
+
+This is one of three applications in the `overnight` monorepo (see the
+root `README.md` and `ARCHITECTURE.md`). Within it:
 
 - `overnight-frontend` never calls this service directly.
 - `overnight-backend` orchestrates data from PostgreSQL, sends compact payloads
@@ -156,8 +159,11 @@ Swagger UI:
 ## Deployment
 
 - Dockerized with `python:3.12-slim`.
-- Render deployment config in `render.yaml` with `/health` health check.
-- CircleCI config includes test job plus Snyk scan.
+- Render deployment config in `render.yaml` with `/health` health check,
+  root directory set to `overnight-analytics` in the Render project.
+- Build/test/Snyk-scan job runs from the shared root `.circleci/config.yml`
+  (one pipeline for all three services - CircleCI only reads config at
+  the repo root).
 
 Build image:
 

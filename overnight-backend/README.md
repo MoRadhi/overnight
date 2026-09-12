@@ -8,11 +8,13 @@ It sits between:
 - PostgreSQL (source-of-truth operational data)
 - `overnight-analytics` (internal compute service)
 
-Last updated: 2026-07-16.
+Last updated: 2026-09-12.
 
-## Purpose In The 3-Repo Architecture
+## Role In The Monorepo
 
-This repo is the central orchestrator:
+This is one of three applications in the `overnight` monorepo (see the
+root `README.md` and `ARCHITECTURE.md`). Within it, this service is the
+central orchestrator:
 
 1. Exposes all public/admin REST endpoints used by frontend.
 2. Enforces auth/authorization and CORS policies.
@@ -316,7 +318,8 @@ docker build -t overnight-backend .
 ## Deployment
 
 - Docker multi-stage build (Maven build + Temurin JRE runtime).
-- Render deployment via `render.yaml`.
+- Render deployment via `render.yaml`, with the Render project's Root
+  Directory set to `overnight-backend` (required since this is a monorepo).
 - Health endpoint: `/actuator/health`.
 - Production DB expected to be Supabase/PostgreSQL.
 
