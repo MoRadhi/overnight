@@ -15,6 +15,6 @@ app.include_router(sentiment.router)
 app.include_router(forecast.router)
 
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 def health():
     return {"service": "overnight-analytics", "status": "ok"}
