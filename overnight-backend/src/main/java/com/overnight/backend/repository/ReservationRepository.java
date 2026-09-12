@@ -10,10 +10,34 @@ import java.util.List;
 
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
-    List<Reservation> findByHotelIdOrderByIdAsc(Long hotelId);
-    List<Reservation> findByGuestIdOrderByIdAsc(Long guestId);
-    List<Reservation> findByStatusOrderByIdAsc(ReservationStatus status);
-    List<Reservation> findByHotelIdAndStatusOrderByIdAsc(Long hotelId, ReservationStatus status);
+    /**
+     * All bulk-fetch queries below join-fetch guest/room/room.roomType/hotel in one
+     * round trip. Reservation's @ManyToOne associations default to EAGER, so without
+     * an explicit fetch join, Hibernate issues a separate SELECT per association per
+     * row - for ~200+ reservations that's 800+ queries and tens of seconds of latency
+     * against a remote DB (this is what made the admin Reservations page and the
+     * group-wide Analytics endpoints take 30-50s to load before this fix).
+     */
+    String FETCH_JOINS = """
+        JOIN FETCH r.guest
+        JOIN FETCH r.room rm
+        JOIN FETCH rm.roomType
+        JOIN FETCH r.hotel
+        """;
+
+    @Query("SELECT r FROM Reservation r " + FETCH_JOINS + " WHERE r.hotel.id = :hotelId ORDER BY r.id")
+    List<Reservation> findByHotelIdOrderByIdAsc(@Param("hotelId") Long hotelId);
+
+    @Query("SELECT r FROM Reservation r " + FETCH_JOINS + " WHERE r.guest.id = :guestId ORDER BY r.id")
+    List<Reservation> findByGuestIdOrderByIdAsc(@Param("guestId") Long guestId);
+
+    @Query("SELECT r FROM Reservation r " + FETCH_JOINS + " WHERE r.status = :status ORDER BY r.id")
+    List<Reservation> findByStatusOrderByIdAsc(@Param("status") ReservationStatus status);
+
+    @Query("SELECT r FROM Reservation r " + FETCH_JOINS + " WHERE r.hotel.id = :hotelId AND r.status = :status ORDER BY r.id")
+    List<Reservation> findByHotelIdAndStatusOrderByIdAsc(@Param("hotelId") Long hotelId, @Param("status") ReservationStatus status);
+
+    @Query("SELECT r FROM Reservation r " + FETCH_JOINS + " ORDER BY r.id")
     List<Reservation> findAllByOrderByIdAsc();
 
     @Query("""
