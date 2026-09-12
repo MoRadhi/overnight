@@ -1,0 +1,131 @@
+version: 2.1
+
+orbs:
+  snyk: snyk/snyk@2.0.3
+
+jobs:
+  backend-build-test:
+    docker:
+      - image: cimg/openjdk:21.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - maven-deps-{{ checksum "overnight-backend/pom.xml" }}
+      - run:
+          name: Resolve dependencies
+          command: cd overnight-backend && mvn dependency:go-offline -B
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: maven-deps-{{ checksum "overnight-backend/pom.xml" }}
+      - run:
+          name: Build and run tests
+          command: cd overnight-backend && mvn -B clean verify
+      - store_test_results:
+          path: overnight-backend/target/surefire-reports
+
+  backend-security-scan:
+    docker:
+      - image: cimg/openjdk:21.0
+    steps:
+      - checkout
+      - snyk/scan:
+          fail-on-issues: false
+          monitor-on-build: true
+          target-file: overnight-backend/pom.xml
+
+  analytics-build-test:
+    docker:
+      - image: cimg/python:3.12
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - pip-deps-{{ checksum "overnight-analytics/requirements.txt" }}
+      - run:
+          name: Install dependencies
+          command: |
+            cd overnight-analytics
+            python -m venv venv
+            . venv/bin/activate
+            pip install -r requirements.txt
+      - save_cache:
+          paths:
+            - overnight-analytics/venv
+          key: pip-deps-{{ checksum "overnight-analytics/requirements.txt" }}
+      - run:
+          name: Run tests
+          command: |
+            cd overnight-analytics
+            . venv/bin/activate
+            pytest tests/ -v --junitxml=test-results/junit.xml
+      - store_test_results:
+          path: overnight-analytics/test-results
+
+  analytics-security-scan:
+    docker:
+      - image: cimg/python:3.12
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - pip-deps-{{ checksum "overnight-analytics/requirements.txt" }}
+      - run:
+          name: Prepare Python environment for Snyk
+          command: |
+            cd overnight-analytics
+            python -m venv venv
+            . venv/bin/activate
+            python -m pip install --upgrade pip setuptools wheel
+            pip install -r requirements.txt
+            echo 'export PATH="'"$(pwd)"'/venv/bin:$PATH"' >> "$BASH_ENV"
+      - snyk/scan:
+          fail-on-issues: false
+          monitor-on-build: true
+          target-file: overnight-analytics/requirements.txt
+          additional-arguments: "--package-manager=pip --command=python3"
+
+  frontend-build-test:
+    docker:
+      - image: cimg/node:22.14.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - npm-deps-{{ checksum "overnight-frontend/package-lock.json" }}
+      - run:
+          name: Install dependencies
+          command: cd overnight-frontend && npm ci
+      - save_cache:
+          paths:
+            - overnight-frontend/node_modules
+          key: npm-deps-{{ checksum "overnight-frontend/package-lock.json" }}
+      - run:
+          name: Build
+          command: cd overnight-frontend && npm run build
+      - run:
+          name: Test
+          command: cd overnight-frontend && npm test --if-present
+
+  frontend-security-scan:
+    docker:
+      - image: cimg/node:20.11
+    steps:
+      - checkout
+      - snyk/scan:
+          fail-on-issues: false
+          monitor-on-build: true
+          target-file: overnight-frontend/package.json
+
+workflows:
+  build-test-scan:
+    jobs:
+      - backend-build-test
+      - backend-security-scan
+      - analytics-build-test
+      - analytics-security-scan:
+          requires:
+            - analytics-build-test
+      - frontend-build-test
+      - frontend-security-scan
