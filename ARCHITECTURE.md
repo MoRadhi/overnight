@@ -3,14 +3,18 @@
 This document describes the current architecture across the three sibling repositories in this project.
 It is intended as a high-level source of truth for an AI or developer that needs to understand service boundaries, repo structure, and how data flows between the apps.
 
-Last updated: 2026-07-16.
+Last updated: 2026-09-12.
 
 ## Root layout
 
 The parent directory contains:
 
+- `.circleci/config.yml` - the single CI pipeline for all three services
+  (CircleCI only reads config at the repo root; each service used to have
+  its own file when this was three separate repos - see "CI/CD" below).
 - `docker-compose.yml` - local dev compose file for PostgreSQL, backend, analytics, and frontend.
 - `README.md` - project-level README with repo responsibilities and local run instructions.
+- `Deployment.md` - full deployment walkthrough, including monorepo-migration gotchas.
 - `overnight-backend/` - Java Spring Boot service.
 - `overnight-analytics/` - Python FastAPI microservice.
 - `overnight-frontend/` - React/Vite frontend.
@@ -63,7 +67,6 @@ Stack
 
 Key files and directories
 
-- `.circleci/config.yml`
 - `.github/workflows/supabase-keepalive.yml`
 - `.dockerignore`
 - `.gitignore`
@@ -182,6 +185,14 @@ Important backend behavior
   public browse and booking routes open; a `disable-auth` switch exists for
   controlled local scenarios.
 - `application.yml` reads DB and analytics URLs, JWT secret, and port from environment variables.
+- Every list-returning repository query (`HotelRepository`,
+  `RoomRepository`, `RoomTypeRepository`, `ReservationRepository`,
+  `GuestRepository`) explicitly orders by `id`. Postgres does not
+  guarantee row order without `ORDER BY`, and an `UPDATE` can relocate a
+  row's physical position in an unordered scan - without explicit
+  ordering, editing a hotel/room/reservation could shift its position in
+  the next fetch, making admins believe their edit never persisted when
+  it actually had (it just showed up in a different row than expected).
 
 Public browse endpoints used by frontend home and detail pages
 
@@ -204,7 +215,6 @@ Stack
 
 Key files and directories
 
-- `.circleci/config.yml`
 - `.gitignore`
 - `.env.local`
 - `.oxlintrc.json`
@@ -235,6 +245,10 @@ Main source structure
   - `StatusBadge.jsx`
 - `src/context/`
   - `AuthContext.jsx`
+- `src/hooks/`
+  - `useKeyedCache.js` - per-key in-memory cache shared by the admin
+    Analytics/Reservations/Rooms pages (see "Frontend admin caching" below)
+  - `useLenis.js`, `useReveal.js`, `useTilt.js`
 - `src/pages/admin/`
   - `Analytics.jsx`
   - `Hotels.jsx`
@@ -258,6 +272,18 @@ Frontend responsibilities
 - Contains an auth context for admin sign-in and protected admin routes.
 - Hosts a working public booking flow and admin operations dashboard, including
   CRUD management and analytics views.
+
+Frontend admin caching
+
+- `src/hooks/useKeyedCache.js` gives each admin page a per-filter-key
+  in-memory cache. Analytics (hotel filter), Reservations (hotel filter),
+  and Rooms (hotel -> room types -> rooms drill-down) all re-fetched from
+  the backend on every filter change, even when switching back to a
+  filter viewed seconds earlier. Switching back now reuses the cached
+  result with no network call.
+- Every create/update/delete/status-change invalidates or refreshes the
+  affected cache entry so a mutation is always reflected immediately -
+  caching must never mask a real write.
 
 Frontend image strategy
 
@@ -287,7 +313,6 @@ Stack
 
 Key files and directories
 
-- `.circleci/config.yml`
 - `.dockerignore`
 - `.gitignore`
 - `Dockerfile`

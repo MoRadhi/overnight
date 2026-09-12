@@ -5,7 +5,7 @@ analytics service for guest segmentation, review sentiment, and occupancy
 forecasting. The project is organized as a monorepo with three applications:
 a React frontend, a Spring Boot backend, and a FastAPI analytics service.
 
-Last updated: 2026-07-17.
+Last updated: 2026-09-12.
 
 ## Overview
 
@@ -149,21 +149,24 @@ npm run dev
 
 ## Deployment and CI/CD
 
-Each app maintains its own delivery pipeline inside its folder:
+A single root `.circleci/config.yml` runs build/test and a Snyk security
+scan for all three services (CircleCI only reads config at the repo root,
+so each service can't have its own anymore now that this is one repo).
 
-- overnight-frontend/.circleci/config.yml
-- overnight-backend/.circleci/config.yml
-- overnight-analytics/.circleci/config.yml
+Each service still deploys as its own Render/Vercel project, each pointed
+at this monorepo with its own subfolder set as that project's "Root
+Directory":
 
-Deployment model:
-
-- Frontend: Vercel or Netlify
-- Backend: Render
-- Analytics: Render
+- Frontend: Vercel or Netlify (`overnight-frontend`)
+- Backend: Render (`overnight-backend`)
+- Analytics: Render (`overnight-analytics`)
 - Database: Supabase PostgreSQL
 
 For dependency scanning in CircleCI, configure the `SNYK_TOKEN` environment
-variable per project.
+variable on the project, and enable "Allow uncertified public orbs" under
+Organization Settings → Security (required for the community `snyk/snyk`
+orb). See `Deployment.md` for the full walkthrough and the monorepo
+migration gotchas.
 
 ## Data seeding and reset
 
