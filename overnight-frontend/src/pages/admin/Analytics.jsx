@@ -22,6 +22,7 @@ import {
   getSentiment,
 } from "../../api/analytics";
 import apiClient from "../../api/apiClient";
+import { useKeyedCache } from "../../hooks/useKeyedCache";
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const ACCENT = "#E8A23D";
@@ -185,8 +186,12 @@ export default function Analytics() {
       .catch(() => {});
   }, []);
 
+  // Per-hotel-filter cache so switching back to a previously viewed filter
+  // (e.g. "All hotels" -> a hotel -> "All hotels") reuses in-memory data
+  // instead of re-hitting the backend/analytics service every time.
+  const cache = useKeyedCache();
+
   const checkSystemHealth = useCallback(async () => {
-    const id = hotelId || undefined;
     setHealthLoading(true);
     setHealth({ backend: "checking", analytics: "checking", checkedAt: null });
     setHealthNote("");
@@ -205,7 +210,7 @@ export default function Analytics() {
     }
 
     try {
-      await getSummary(id);
+      await getSummary();
       setHealth({
         backend: "healthy",
         analytics: "healthy",
@@ -224,40 +229,71 @@ export default function Analytics() {
     } finally {
       setHealthLoading(false);
     }
-  }, [hotelId]);
+  }, []);
 
-  const load = useCallback(async (hId) => {
+  const load = useCallback((hId, { force = false } = {}) => {
+    const key = hId || "all";
     const id = hId || undefined;
     setError(null);
 
+    const cached = cache.get(key);
+    if (!force && cached) {
+      setSummary(cached.summary);
+      setSegments(cached.segments);
+      setSentiment(cached.sentiment);
+      setForecast(cached.forecast);
+      return;
+    }
+
+    const entry = { summary: null, segments: [], sentiment: [], forecast: [] };
+    cache.set(key, entry);
+
     setLoadingSummary(true);
     getSummary(id)
-      .then(setSummary)
+      .then((data) => {
+        entry.summary = data;
+        setSummary(data);
+      })
       .catch(() => setError("Could not load analytics summary."))
       .finally(() => setLoadingSummary(false));
 
     setLoadingSegments(true);
     getSegments(id)
-      .then(setSegments)
+      .then((data) => {
+        entry.segments = data;
+        setSegments(data);
+      })
       .catch(() => {})
       .finally(() => setLoadingSegments(false));
 
     setLoadingSentiment(true);
     getSentiment(id)
-      .then(setSentiment)
+      .then((data) => {
+        entry.sentiment = data;
+        setSentiment(data);
+      })
       .catch(() => {})
       .finally(() => setLoadingSentiment(false));
 
     if (hId) {
       setLoadingForecast(true);
       getForecast(hId)
-        .then(setForecast)
+        .then((data) => {
+          entry.forecast = data;
+          setForecast(data);
+        })
         .catch(() => {})
         .finally(() => setLoadingForecast(false));
     } else {
       setForecast([]);
     }
-  }, []);
+  }, [cache]);
+
+  const refresh = useCallback(() => {
+    cache.invalidate(hotelId || "all");
+    load(hotelId, { force: true });
+    checkSystemHealth();
+  }, [hotelId, load, checkSystemHealth, cache]);
 
   useEffect(() => {
     load(hotelId);
@@ -265,7 +301,10 @@ export default function Analytics() {
 
   useEffect(() => {
     checkSystemHealth();
-  }, [checkSystemHealth]);
+    // Runs once on mount only - the health check is a general connectivity
+    // probe, not per-filter data, so it shouldn't refire on every dropdown change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Derived data ────────────────────────────────────────────────────────────
   const segmentPieData = summary?.segmentDistribution
@@ -354,7 +393,7 @@ export default function Analytics() {
           <Button
             size="sm"
             variant="outline-light"
-            onClick={checkSystemHealth}
+            onClick={refresh}
             disabled={healthLoading}
             style={{ fontSize: "0.75rem" }}
           >

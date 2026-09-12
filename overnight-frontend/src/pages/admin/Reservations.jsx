@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Container,
   Table,
@@ -13,6 +13,7 @@ import { getHotels } from "../../api/hotels";
 import { getReservations, updateStatus } from "../../api/reservations";
 import StatusBadge from "../../components/StatusBadge";
 import ConfirmModal from "../../components/ConfirmModal";
+import { useKeyedCache } from "../../hooks/useKeyedCache";
 
 const STATUS_FILTERS = [
   "ALL",
@@ -37,27 +38,41 @@ export default function Reservations() {
   const [actioning, setActioning] = useState(false);
   const [actionError, setActionError] = useState(null);
 
+  const cache = useKeyedCache();
+
   useEffect(() => {
     getHotels()
       .then(setHotels)
       .catch(() => {});
-    load();
   }, []);
 
-  async function load(hId) {
-    setLoading(true);
-    try {
-      setReservations(await getReservations(hId || undefined));
-    } catch {
-      setError("Failed to load reservations.");
-    } finally {
-      setLoading(false);
-    }
-  }
+  const load = useCallback(
+    async (hId, { force = false } = {}) => {
+      const key = hId || "all";
+      if (!force) {
+        const cached = cache.get(key);
+        if (cached) {
+          setReservations(cached);
+          return;
+        }
+      }
+      setLoading(true);
+      try {
+        const data = await getReservations(hId || undefined);
+        cache.set(key, data);
+        setReservations(data);
+      } catch {
+        setError("Failed to load reservations.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [cache],
+  );
 
   useEffect(() => {
     load(hotelFilter || undefined);
-  }, [hotelFilter]);
+  }, [hotelFilter, load]);
 
   async function handleStatusAction() {
     setActioning(true);
@@ -65,7 +80,10 @@ export default function Reservations() {
     try {
       await updateStatus(actionTarget.reservation.id, actionTarget.newStatus);
       setActionTarget(null);
-      await load(hotelFilter || undefined);
+      // A status change can affect any filtered view of this reservation
+      // (e.g. it moves between "All hotels" and a per-hotel filter's counts).
+      cache.invalidate();
+      await load(hotelFilter || undefined, { force: true });
     } catch (err) {
       setActionError(err.response?.data?.detail ?? "Action failed.");
       setActioning(false);

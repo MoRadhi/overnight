@@ -22,6 +22,7 @@ import {
   deleteRoom,
 } from "../../api/rooms";
 import ConfirmModal from "../../components/ConfirmModal";
+import { useKeyedCache } from "../../hooks/useKeyedCache";
 
 const EMPTY_RT = { name: "", description: "", basePrice: "", capacity: 2 };
 const EMPTY_RM = { roomNumber: "", floor: 0, status: "AVAILABLE" };
@@ -52,6 +53,9 @@ export default function Rooms() {
   const [delRm, setDelRm] = useState(null);
   const [deletingRm, setDeletingRm] = useState(false);
 
+  const roomTypesCache = useKeyedCache();
+  const roomsCache = useKeyedCache();
+
   useEffect(() => {
     getHotels()
       .then(setHotels)
@@ -65,26 +69,42 @@ export default function Rooms() {
       setRooms([]);
       return;
     }
+    const cached = roomTypesCache.get(hotelId);
+    if (cached) {
+      setRoomTypes(cached);
+      setSelectedRt(null);
+      setRooms([]);
+      return;
+    }
     setLoading(true);
     getRoomTypes(hotelId)
       .then((rt) => {
+        roomTypesCache.set(hotelId, rt);
         setRoomTypes(rt);
         setSelectedRt(null);
         setRooms([]);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [hotelId]);
+  }, [hotelId, roomTypesCache]);
 
   useEffect(() => {
     if (!selectedRt) {
       setRooms([]);
       return;
     }
+    const cached = roomsCache.get(selectedRt.id);
+    if (cached) {
+      setRooms(cached);
+      return;
+    }
     getRooms(selectedRt.id)
-      .then(setRooms)
+      .then((data) => {
+        roomsCache.set(selectedRt.id, data);
+        setRooms(data);
+      })
       .catch(() => {});
-  }, [selectedRt]);
+  }, [selectedRt, roomsCache]);
 
   // ── Room type helpers ───────────────────────────────────────────────────────
   const rtField = (k) => ({
@@ -125,6 +145,7 @@ export default function Rooms() {
       else await createRoomType(body);
       setShowRtModal(false);
       const updated = await getRoomTypes(hotelId);
+      roomTypesCache.set(hotelId, updated);
       setRoomTypes(updated);
       if (editingRt && selectedRt?.id === editingRt.id) {
         setSelectedRt(updated.find((r) => r.id === editingRt.id) ?? null);
@@ -145,6 +166,8 @@ export default function Rooms() {
         setSelectedRt(null);
         setRooms([]);
       }
+      roomsCache.invalidate(delRt.id);
+      roomTypesCache.invalidate(hotelId);
       setRoomTypes((rt) => rt.filter((r) => r.id !== delRt.id));
     } catch {
     } finally {
@@ -188,7 +211,9 @@ export default function Rooms() {
       if (editingRm) await updateRoom(editingRm.id, body);
       else await createRoom(body);
       setShowRmModal(false);
-      setRooms(await getRooms(selectedRt.id));
+      const updated = await getRooms(selectedRt.id);
+      roomsCache.set(selectedRt.id, updated);
+      setRooms(updated);
     } catch (err) {
       setRmError(err.response?.data?.detail ?? "Save failed.");
     } finally {
@@ -201,6 +226,7 @@ export default function Rooms() {
     try {
       await deleteRoom(delRm.id);
       setDelRm(null);
+      roomsCache.invalidate(selectedRt.id);
       setRooms((rm) => rm.filter((r) => r.id !== delRm.id));
     } catch {
     } finally {
