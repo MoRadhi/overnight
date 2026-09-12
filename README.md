@@ -135,13 +135,13 @@ npm run dev
 - Create reservations and submit post-stay reviews
 
 ![Home page hero](docs/screenshots/01-home-hero.png)
-_Home — hero and navigation._
+_Home: hero and navigation._
 
 ![Curated properties grid](docs/screenshots/03-home-properties.png)
-_Home — curated properties grid._
+_Home: curated properties grid._
 
 ![Hotel detail page](docs/screenshots/04-hotel-detail.png)
-_Hotel detail — description, room selection, and booking sidebar._
+_Hotel detail: description, room selection, and booking sidebar._
 
 ![Booking form](docs/screenshots/05-booking-form.png)
 _Booking flow for a selected room type._
@@ -157,13 +157,13 @@ _Booking flow for a selected room type._
 _Admin sign-in._
 
 ![Admin hotel management](docs/screenshots/07-admin-hotels.png)
-_Admin — hotel CRUD._
+_Admin: hotel CRUD._
 
 ![Admin room and room type management](docs/screenshots/08-admin-rooms.png)
-_Admin — room type and room inventory management._
+_Admin: room type and room inventory management._
 
 ![Admin reservations list](docs/screenshots/09-admin-reservations.png)
-_Admin — reservation lifecycle management across all properties._
+_Admin: reservation lifecycle management across all properties._
 
 ### Analytics features
 
@@ -172,7 +172,7 @@ _Admin — reservation lifecycle management across all properties._
 - Occupancy summaries and short-term forecasting
 
 ![Admin analytics dashboard](docs/screenshots/10-admin-analytics.png)
-_Admin analytics — revenue, guest segments, and sentiment, group-wide._
+_Admin analytics: revenue, guest segments, and sentiment, group-wide._
 
 ## Deployment and CI/CD
 
